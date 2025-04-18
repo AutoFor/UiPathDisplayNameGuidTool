@@ -72,8 +72,10 @@ namespace UiPathDisplayNameGuidTool
                         continue;
                     }
 
-                    // アクティビティタイプを取得
+                    // アクティビティタイプと位置情報を取得
                     string activityType = GetActivityType(content, match.Index);
+                    string position = GetActivityPosition(content, match.Index);
+                    
                     if (string.IsNullOrEmpty(activityType))
                     {
                         _logger.LogWarning($"アクティビティタイプを取得できませんでした: {displayName}");
@@ -81,14 +83,14 @@ namespace UiPathDisplayNameGuidTool
                     }
 
                     // 新しいGUIDを生成
-                    string guid = _guidGenerator.GenerateGuid(activityType);
+                    string guid = _guidGenerator.GenerateGuid(activityType, position);
 
                     // DisplayNameを置換
                     string newDisplayName = $"{displayName} [{guid}]";
                     content = ReplaceDisplayName(content, displayName, newDisplayName);
                     hasChanges = true;
 
-                    _logger.LogInfo($"DisplayNameを更新: {displayName} -> {newDisplayName} (アクティビティタイプ: {activityType})");
+                    _logger.LogInfo($"DisplayNameを更新: {displayName} -> {newDisplayName} (アクティビティタイプ: {activityType}, 位置: {position})");
                 }
 
                 if (hasChanges)
@@ -141,6 +143,52 @@ namespace UiPathDisplayNameGuidTool
             {
                 _logger.LogError($"アクティビティタイプの取得中にエラーが発生しました: {ex.Message}");
                 return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// アクティビティの位置情報を取得します
+        /// </summary>
+        /// <param name="content">XAMLファイルの内容</param>
+        /// <param name="displayNameIndex">DisplayNameの位置</param>
+        /// <returns>アクティビティの位置情報</returns>
+        private string GetActivityPosition(string content, int displayNameIndex)
+        {
+            try
+            {
+                // DisplayNameの前の部分を取得
+                string beforeDisplayName = content.Substring(0, displayNameIndex);
+                
+                // 親アクティビティの位置を特定
+                int parentStartIndex = beforeDisplayName.LastIndexOf("<Sequence");
+                if (parentStartIndex == -1)
+                {
+                    parentStartIndex = beforeDisplayName.LastIndexOf("<Flowchart");
+                }
+                if (parentStartIndex == -1)
+                {
+                    parentStartIndex = beforeDisplayName.LastIndexOf("<State");
+                }
+
+                if (parentStartIndex == -1)
+                {
+                    return "root";
+                }
+
+                // 親アクティビティのIDを取得
+                string parentContent = beforeDisplayName.Substring(parentStartIndex);
+                var idMatch = Regex.Match(parentContent, @"sap2010:WorkflowViewState.IdRef=""([^""]+)""");
+                if (!idMatch.Success)
+                {
+                    return "unknown";
+                }
+
+                return idMatch.Groups[1].Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"アクティビティの位置情報の取得中にエラーが発生しました: {ex.Message}");
+                return "error";
             }
         }
 
