@@ -8,7 +8,7 @@ namespace UiPathDisplayNameGuidTool
     public class GuidGenerator
     {
         private readonly Logger _logger;
-        private readonly HashSet<string> _generatedGuids = new();
+        private readonly Dictionary<string, HashSet<string>> _generatedGuidsByType = new();
 
         public GuidGenerator(Logger logger)
         {
@@ -18,13 +18,35 @@ namespace UiPathDisplayNameGuidTool
         /// <summary>
         /// 新しいGUIDを生成します
         /// </summary>
+        /// <param name="activityType">アクティビティのタイプ</param>
         /// <returns>生成されたGUID</returns>
-        public string GenerateGuid()
+        public string GenerateGuid(string activityType)
         {
-            string guid = Guid.NewGuid().ToString();
-            _generatedGuids.Add(guid);
-            _logger.LogInfo($"新しいGUIDを生成: {guid}");
+            string guid;
+            do
+            {
+                guid = Guid.NewGuid().ToString();
+            } while (IsGuidAlreadyUsed(activityType, guid));
+
+            if (!_generatedGuidsByType.ContainsKey(activityType))
+            {
+                _generatedGuidsByType[activityType] = new HashSet<string>();
+            }
+            _generatedGuidsByType[activityType].Add(guid);
+            _logger.LogInfo($"新しいGUIDを生成: {guid} (アクティビティタイプ: {activityType})");
             return guid;
+        }
+
+        /// <summary>
+        /// 指定されたGUIDが既に使用されているかどうかをチェックします
+        /// </summary>
+        /// <param name="activityType">アクティビティのタイプ</param>
+        /// <param name="guid">チェックするGUID</param>
+        /// <returns>使用済みの場合はtrue、そうでない場合はfalse</returns>
+        private bool IsGuidAlreadyUsed(string activityType, string guid)
+        {
+            return _generatedGuidsByType.ContainsKey(activityType) && 
+                   _generatedGuidsByType[activityType].Contains(guid);
         }
 
         /// <summary>

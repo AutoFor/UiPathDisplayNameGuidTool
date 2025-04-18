@@ -73,7 +73,7 @@ namespace UiPathDisplayNameGuidTool
                     }
 
                     // 新しいGUIDを生成
-                    string guid = _guidGenerator.GenerateGuid();
+                    string guid = _guidGenerator.GenerateGuid(activityType);
 
                     // DisplayNameを置換
                     string newDisplayName = $"{displayName} [{guid}]";
