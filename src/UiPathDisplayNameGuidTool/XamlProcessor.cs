@@ -75,15 +75,16 @@ namespace UiPathDisplayNameGuidTool
                     // アクティビティタイプと位置情報を取得
                     string activityType = GetActivityType(content, match.Index);
                     string position = GetActivityPosition(content, match.Index);
+                    string displayNameValue = GetDisplayNameValue(displayName);
                     
                     if (string.IsNullOrEmpty(activityType))
                     {
-                        _logger.LogWarning($"アクティビティタイプを取得できませんでした: {displayName}");
+                        _logger.LogWarning($"アクティビティタイプを取得できませんでした。位置: {position}");
                         continue;
                     }
 
                     // 新しいGUIDを生成
-                    string guid = _guidGenerator.GenerateGuid(activityType, position);
+                    string guid = _guidGenerator.GenerateGuid(activityType, position, displayNameValue);
 
                     // DisplayNameを置換
                     string newDisplayName = $"{displayName} [{guid}]";
@@ -183,12 +184,36 @@ namespace UiPathDisplayNameGuidTool
                     return "unknown";
                 }
 
-                return idMatch.Groups[1].Value;
+                // 親アクティビティの表示名を取得
+                var displayNameMatch = Regex.Match(parentContent, @"DisplayName\s*=\s*""([^""]*)""");
+                string parentDisplayName = displayNameMatch.Success ? displayNameMatch.Groups[1].Value : "unnamed";
+
+                return $"{idMatch.Groups[1].Value}_{parentDisplayName}";
             }
             catch (Exception ex)
             {
                 _logger.LogError($"アクティビティの位置情報の取得中にエラーが発生しました: {ex.Message}");
                 return "error";
+            }
+        }
+
+        /// <summary>
+        /// DisplayNameの値を取得します
+        /// </summary>
+        /// <param name="displayName">DisplayNameの文字列</param>
+        /// <returns>DisplayNameの値</returns>
+        private string GetDisplayNameValue(string displayName)
+        {
+            try
+            {
+                // DisplayNameからGUIDを除去
+                var pattern = @"\s*\[[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\]$";
+                return Regex.Replace(displayName, pattern, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"DisplayNameの値の取得中にエラーが発生しました: {ex.Message}");
+                return displayName;
             }
         }
 

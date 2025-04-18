@@ -9,7 +9,7 @@ namespace UiPathDisplayNameGuidTool
 #if DEBUG
             // デバッグ用のコード
             // デフォルトのディレクトリパスを設定
-            string[] debugArgs = new string[] { @"C:\Users\SeiyaKawashima\OneDrive - AutoFor\ドキュメント\UiPath\!AutoFor会計" };
+            string[] debugArgs = new string[] { @"C:\Users\SeiyaKawashima\OneDrive - AutoFor\ドキュメント\UiPath\!AutoFor会計_backup_20250418_102820" };
             ProcessFiles(debugArgs);
 #else
             // 本番用のコード
