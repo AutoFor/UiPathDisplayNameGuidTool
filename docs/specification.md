@@ -49,8 +49,13 @@
    - 既にGUIDが付与されている場合はスキップ
 
 4. バックアップ機能
-   - 処理前に元のフォルダのバックアップを作成
+   - 処理前に元のフォルダの完全なバックアップを作成
+   - バックアップには以下の内容が含まれます：
+     - すべてのファイル（XAMLファイル以外も含む）
+     - すべてのディレクトリ（.から始まる隠しディレクトリも含む）
+     - 空のディレクトリも含む
    - バックアップフォルダ名：`[フォルダ名]_backup_YYYYMMDD_HHMMSS`
+   - バックアップは元のフォルダと同じ階層に作成
 
 ### 3.2 処理フロー
 // このツールがどのような順序で処理を行うかを説明します。
@@ -172,6 +177,7 @@ public class BackupManager
     public string CreateBackupDirectory(string sourceDirectory);
     public bool CopyFilesToBackup(string sourceDirectory, string backupDirectory);
     public string GenerateBackupDirectoryName(string sourceDirectory);
+    private void CopyDirectory(string sourceDir, string destDir);
 }
 ```
 
