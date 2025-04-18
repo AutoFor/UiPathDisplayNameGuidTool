@@ -72,6 +72,14 @@ namespace UiPathDisplayNameGuidTool
                         continue;
                     }
 
+                    // アクティビティタイプを取得
+                    string activityType = GetActivityType(content, match.Index);
+                    if (string.IsNullOrEmpty(activityType))
+                    {
+                        _logger.LogWarning($"アクティビティタイプを取得できませんでした: {displayName}");
+                        continue;
+                    }
+
                     // 新しいGUIDを生成
                     string guid = _guidGenerator.GenerateGuid(activityType);
 
@@ -80,7 +88,7 @@ namespace UiPathDisplayNameGuidTool
                     content = ReplaceDisplayName(content, displayName, newDisplayName);
                     hasChanges = true;
 
-                    _logger.LogInfo($"DisplayNameを更新: {displayName} -> {newDisplayName}");
+                    _logger.LogInfo($"DisplayNameを更新: {displayName} -> {newDisplayName} (アクティビティタイプ: {activityType})");
                 }
 
                 if (hasChanges)
@@ -96,6 +104,43 @@ namespace UiPathDisplayNameGuidTool
             {
                 _logger.LogError($"ファイル {filePath} の処理中にエラーが発生しました: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// アクティビティタイプを取得します
+        /// </summary>
+        /// <param name="content">XAMLファイルの内容</param>
+        /// <param name="displayNameIndex">DisplayNameの位置</param>
+        /// <returns>アクティビティタイプ</returns>
+        private string GetActivityType(string content, int displayNameIndex)
+        {
+            try
+            {
+                // DisplayNameの前の部分を取得
+                string beforeDisplayName = content.Substring(0, displayNameIndex);
+                
+                // 最後の開始タグを検索
+                int lastOpenTagIndex = beforeDisplayName.LastIndexOf('<');
+                if (lastOpenTagIndex == -1)
+                {
+                    return string.Empty;
+                }
+
+                // タグ名を取得
+                string tagContent = beforeDisplayName.Substring(lastOpenTagIndex);
+                var tagMatch = Regex.Match(tagContent, @"<([^\s>]+)");
+                if (!tagMatch.Success)
+                {
+                    return string.Empty;
+                }
+
+                return tagMatch.Groups[1].Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"アクティビティタイプの取得中にエラーが発生しました: {ex.Message}");
+                return string.Empty;
             }
         }
 
