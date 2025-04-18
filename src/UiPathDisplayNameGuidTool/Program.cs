@@ -9,7 +9,7 @@ namespace UiPathDisplayNameGuidTool
 #if DEBUG
             // デバッグ用のコード
             // デフォルトのディレクトリパスを設定
-            string[] debugArgs = new string[] { @"C:\Users\SeiyaKawashima\OneDrive - AutoFor\ドキュメント\UiPath\!AutoFor会計_backup_20250418_102820" };
+            string[] debugArgs = new string[] { @"C:\Users\SeiyaKawashima\OneDrive - AutoFor\ドキュメント\UiPath\飯塚こども診療所_予約" };
             ProcessFiles(debugArgs);
 #else
             // 本番用のコード
@@ -36,10 +36,8 @@ namespace UiPathDisplayNameGuidTool
             // 引数から対象ディレクトリを取得
             string targetDirectory = args[0];
 
-            // ログを保存するディレクトリのパスを設定
-            string logDirectory = Path.Combine(Environment.CurrentDirectory, "Logs");
             // ロガーを初期化
-            var logger = new Logger(logDirectory);
+            var logger = new Logger(targetDirectory);
 
             // 処理開始のログを出力
             logger.LogInfo("処理を開始します");
@@ -100,7 +98,10 @@ namespace UiPathDisplayNameGuidTool
             logger.LogInfo($"正常に処理したファイル数: {processedFiles}");
             logger.LogInfo($"処理に失敗したファイル数: {failedFiles}");
             logger.LogInfo($"バックアップディレクトリ: {backupDirectory}");
-            logger.LogInfo($"ログファイル: {Path.Combine(logDirectory, Path.GetFileName(logger.GetLogFilePath()))}");
+            logger.LogInfo($"ログファイル: {Path.Combine(targetDirectory, Path.GetFileName(logger.GetLogFilePath()))}");
+
+            // ログファイルを保存
+            logger.SaveLogToFile();
         }
     }
 }

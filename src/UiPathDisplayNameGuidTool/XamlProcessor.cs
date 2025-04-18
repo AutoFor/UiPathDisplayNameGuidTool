@@ -91,7 +91,8 @@ namespace UiPathDisplayNameGuidTool
                     content = ReplaceDisplayName(content, displayName, newDisplayName);
                     hasChanges = true;
 
-                    _logger.LogInfo($"DisplayNameを更新: {displayName} -> {newDisplayName} (アクティビティタイプ: {activityType}, 位置: {position})");
+                    // ログに変更を記録
+                    _logger.LogChange(filePath, displayName, newDisplayName);
                 }
 
                 if (hasChanges)

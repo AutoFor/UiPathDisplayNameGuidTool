@@ -1,120 +1,140 @@
+using System;
+using System.IO;
+using System.Text;
+
 namespace UiPathDisplayNameGuidTool
 {
     /// <summary>
     /// ログを管理するクラス
+    /// 2種類のログファイルを作成します：
+    /// 1. guid_changes.csv - DisplayNameの変更内容を記録
+    /// 2. guid_changes.log - 処理の進行状況を記録
     /// </summary>
     public class Logger
     {
-        /// <summary>
-        /// ログファイルのパスを保持するフィールド
-        /// </summary>
-        private readonly string _logFilePath;
-        /// <summary>
-        /// ログ書き込み時の排他制御用オブジェクト
-        /// </summary>
+        // CSVログファイルのパスを保持する変数
+        private readonly string _csvLogFilePath;
+        // テキストログファイルのパスを保持する変数
+        private readonly string _textLogFilePath;
+        // 複数のスレッドから同時にログを書き込むのを防ぐためのロックオブジェクト
         private readonly object _lockObject = new();
+        // CSVログの内容を一時的に保持する変数
+        private readonly StringBuilder _csvLogContent = new();
+        // テキストログの内容を一時的に保持する変数
+        private readonly StringBuilder _textLogContent = new();
 
         /// <summary>
-        /// コンストラクタ（初期化処理）
+        /// コンストラクタ - ログファイルの初期設定を行います
         /// </summary>
-        public Logger(string logDirectory)
+        /// <param name="targetDirectory">ログファイルを保存するディレクトリのパス</param>
+        public Logger(string targetDirectory)
         {
-            /// <summary>
-            /// ログディレクトリが存在しない場合の処理
-            /// </summary>
-            if (!Directory.Exists(logDirectory))
-            {
-                /// <summary>
-                /// ログディレクトリを作成
-                /// </summary>
-                Directory.CreateDirectory(logDirectory);
-            }
+            // CSVログファイルの設定
+            // ファイル名を設定
+            string csvLogFileName = "guid_changes.csv";
+            // 保存先のフルパスを作成
+            _csvLogFilePath = Path.Combine(targetDirectory, csvLogFileName);
+            // CSVのヘッダー行を追加
+            _csvLogContent.AppendLine("FileName,Before,After");
 
-            /// <summary>
-            /// 現在の日時を取得してログファイル名を生成
-            /// </summary>
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            /// <summary>
-            /// ログファイルの完全なパスを生成
-            /// </summary>
-            _logFilePath = Path.Combine(logDirectory, $"UiPathDisplayNameGuidTool_{timestamp}.log");
+            // テキストログファイルの設定
+            // ファイル名を設定
+            string textLogFileName = "guid_changes.log";
+            // 保存先のフルパスを作成
+            _textLogFilePath = Path.Combine(targetDirectory, textLogFileName);
         }
 
         /// <summary>
-        /// ログファイルのパスを取得するプロパティ
+        /// DisplayNameの変更内容をCSVログに記録します
         /// </summary>
-        public string LogFilePath => _logFilePath;
+        /// <param name="filePath">変更されたファイルのパス</param>
+        /// <param name="before">変更前のDisplayName</param>
+        /// <param name="after">変更後のDisplayName</param>
+        public void LogChange(string filePath, string before, string after)
+        {
+            // 複数のスレッドから同時に書き込むのを防ぐ
+            lock (_lockObject)
+            {
+                // CSV形式でログ行を作成
+                // 例: "Framework/Test.xaml","元の表示名","新しい表示名 [GUID]"
+                string csvLogLine = $"\"{filePath}\",\"{before}\",\"{after}\"";
+                // ログ内容に追加
+                _csvLogContent.AppendLine(csvLogLine);
+            }
+        }
 
         /// <summary>
-        /// 情報レベルのログを出力するメソッド
+        /// 情報レベルのログを記録します
         /// </summary>
         /// <param name="message">ログメッセージ</param>
         public void LogInfo(string message)
         {
-            /// <summary>
-            /// ログを書き込む
-            /// </summary>
-            WriteLog("INFO", message);
+            // タイムスタンプ付きのログ行を作成
+            string logLine = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [INFO] {message}";
+            // コンソールに出力
+            Console.WriteLine(logLine);
+            // テキストログに追加
+            _textLogContent.AppendLine(logLine);
         }
 
         /// <summary>
-        /// 警告レベルのログを出力するメソッド
-        /// </summary>
-        /// <param name="message">ログメッセージ</param>
-        public void LogWarning(string message)
-        {
-            /// <summary>
-            /// ログを書き込む
-            /// </summary>
-            WriteLog("WARNING", message);
-        }
-
-        /// <summary>
-        /// エラーレベルのログを出力するメソッド
+        /// エラーレベルのログを記録します
         /// </summary>
         /// <param name="message">ログメッセージ</param>
         public void LogError(string message)
         {
-            /// <summary>
-            /// ログを書き込む
-            /// </summary>
-            WriteLog("ERROR", message);
+            // タイムスタンプ付きのログ行を作成
+            string logLine = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [ERROR] {message}";
+            // コンソールに出力
+            Console.WriteLine(logLine);
+            // テキストログに追加
+            _textLogContent.AppendLine(logLine);
         }
 
         /// <summary>
-        /// 実際にログを書き込むプライベートメソッド
+        /// 警告レベルのログを記録します
         /// </summary>
-        private void WriteLog(string level, string message)
+        /// <param name="message">ログメッセージ</param>
+        public void LogWarning(string message)
         {
-            /// <summary>
-            /// ログメッセージのフォーマットを設定
-            /// </summary>
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{level}] {message}";
+            // タイムスタンプ付きのログ行を作成
+            string logLine = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [WARNING] {message}";
+            // コンソールに出力
+            Console.WriteLine(logLine);
+            // テキストログに追加
+            _textLogContent.AppendLine(logLine);
+        }
 
-            /// <summary>
-            /// コンソールにログを出力
-            /// </summary>
-            Console.WriteLine(logMessage);
-
-            /// <summary>
-            /// ファイルへの書き込みを排他制御
-            /// </summary>
+        /// <summary>
+        /// ログファイルを保存します
+        /// </summary>
+        public void SaveLogToFile()
+        {
+            // 複数のスレッドから同時に書き込むのを防ぐ
             lock (_lockObject)
             {
-                /// <summary>
-                /// ログファイルにメッセージを追加
-                /// </summary>
-                File.AppendAllText(_logFilePath, logMessage + Environment.NewLine);
+                try
+                {
+                    // CSVログをファイルに保存
+                    File.WriteAllText(_csvLogFilePath, _csvLogContent.ToString());
+                    // テキストログをファイルに保存
+                    File.WriteAllText(_textLogFilePath, _textLogContent.ToString());
+                }
+                catch (Exception ex)
+                {
+                    // エラーが発生した場合はコンソールにエラーメッセージを出力
+                    Console.WriteLine($"ログファイルの保存中にエラーが発生しました: {ex.Message}");
+                }
             }
         }
 
         /// <summary>
-        /// ログファイルのパスを取得するメソッド
+        /// CSVログファイルのパスを取得します
         /// </summary>
-        /// <returns>ログファイルのパス</returns>
+        /// <returns>CSVログファイルのパス</returns>
         public string GetLogFilePath()
         {
-            return _logFilePath;
+            return _csvLogFilePath;
         }
     }
 } 

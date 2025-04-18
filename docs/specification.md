@@ -137,6 +137,24 @@
   - 引数が指定されていない場合はエラーを表示
     - エラーメッセージ: "対象ディレクトリを指定してください。使用方法: UiPathDisplayNameGuidTool <フォルダパス>"
 
+### 3.4 ログ機能
+- ログファイルの形式
+  - ファイル名: `guid_changes.csv`
+  - 保存場所: 実行ファイルと同じディレクトリ内の`Logs`フォルダ
+    - 例: `C:\Users\SeiyaKawashima\OneDrive - AutoFor\ドキュメント\Cursor\UiPathDisplayName\src\UiPathDisplayNameGuidTool\bin\Debug\net9.0\Logs\guid_changes.csv`
+  - フォーマット: CSV形式
+  - ヘッダー: `パス,変更前,変更後`
+  - 例: `"Framework/Testcaegenerater.xaml","aaa","aaa [GUID]"`
+
+- ログの内容
+  - パス: 変更されたXAMLファイルのパス
+  - 変更前: GUID追加前のDisplayName
+  - 変更後: GUID追加後のDisplayName
+
+- ログの保存タイミング
+  - 各XAMLファイルの処理完了時に記録
+  - プログラム終了時にファイルに保存
+
 ## 4. 技術要件
 ### 4.1 開発環境
 // このツールを開発するために必要な環境を説明します。
